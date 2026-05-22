@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+body {
+  font-family: Inter, system-ui, sans-serif;
+  background-color: #f3f4f6;
+  color: #1a1f36;
+  margin: 0;
+}
+
+.react-calendar {
+  border: none;
+  font-family: Inter, system-ui, sans-serif;
+  width: 100%;
+}
+.react-calendar__tile {
+  height: 44px;
+  border-radius: 50%;
+  font-size: 14px;
+}
+.react-calendar__tile:enabled:hover {
+  background: #006bff;
+  color: white;
+  border-radius: 50%;
+}
+.react-calendar__tile--active {
+  background: #006bff;
+  color: white;
+  border-radius: 50%;
+}
+.react-calendar__tile--now {
+  font-weight: 700;
+  background: transparent;
+}
+.react-calendar__tile:disabled {
+  color: #d1d5db;
+  background: transparent;
+}
+.react-calendar__navigation button {
+  font-size: 16px;
+  font-weight: 500;
+}
+.react-calendar__month-view__weekdays {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  font-weight: 500;
+}
