@@ -7,6 +7,7 @@ const { initDefaultUser } = require('./lib/defaultUser');
 const eventTypesRouter = require('./routes/eventTypes');
 const availabilityRouter = require('./routes/availability');
 const meetingsRouter = require('./routes/meetings');
+const contactsRouter = require('./routes/contacts');
 const publicRouter = require('./routes/public');
 const { error } = require('console');
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/api/event-types', eventTypesRouter);
 app.use('/api/availability', availabilityRouter);
 app.use('/api/meetings', meetingsRouter);
+app.use('/api/contacts', contactsRouter);
 app.use('/api/public', publicRouter);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));

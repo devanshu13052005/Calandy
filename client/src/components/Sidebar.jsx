@@ -1,16 +1,23 @@
 import { NavLink } from 'react-router-dom';
+import { useAdminCreate } from '../context/AdminCreateContext';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: 'grid' },
-  { to: '/availability', label: 'Availability', icon: 'clock' },
+  { to: '/', label: 'Scheduling', icon: 'link' },
   { to: '/meetings', label: 'Meetings', icon: 'calendar' },
+  { to: '/availability', label: 'Availability', icon: 'clock' },
+  { to: '/contacts', label: 'Contacts', icon: 'contacts' },
 ];
 
 function NavIcon({ type }) {
-  if (type === 'grid') {
+  if (type === 'link') {
     return (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+        />
       </svg>
     );
   }
@@ -18,6 +25,18 @@ function NavIcon({ type }) {
     return (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+  }
+  if (type === 'contacts') {
+    return (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+        />
       </svg>
     );
   }
@@ -29,20 +48,39 @@ function NavIcon({ type }) {
 }
 
 export default function Sidebar({ host }) {
+  const { openCreateEvent } = useAdminCreate();
+
   return (
-    <aside className="fixed left-0 top-0 h-screen w-60 bg-[#1A1F36] text-white flex flex-col z-10">
-      <div className="px-5 py-6 text-lg font-semibold">Schedule</div>
-      <nav className="flex-1 px-3 space-y-1">
+    <aside className="fixed left-0 top-0 h-screen w-72 bg-[#FAFAFA] border-r border-[#E5E7EB] text-[#1A1F36] flex flex-col z-10">
+      <div className="flex items-center gap-2.5 px-5 pt-6 pb-3">
+        <div className="w-8 h-8 rounded-full bg-[#006BFF] flex items-center justify-center shrink-0">
+          <span className="text-white font-bold text-sm leading-none">C</span>
+        </div>
+        <span className="text-[#006BFF] font-bold text-[17px] tracking-tight">Calandy Clone</span>
+      </div>
+
+      <div className="px-4 pb-4">
+        <button
+          type="button"
+          onClick={openCreateEvent}
+          className="w-full flex items-center justify-center gap-2 h-10 rounded-full border border-[#E5E7EB] bg-white text-sm font-medium text-[#1A1F36] hover:bg-[#F5F5F5] transition-colors shadow-sm"
+        >
+          <span className="text-lg leading-none">+</span>
+          Create
+        </button>
+      </div>
+
+      <nav className="flex-1 px-3 space-y-0.5">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.to === '/'}
             className={({ isActive }) =>
-              `flex items-center gap-3 h-11 px-4 rounded-lg text-sm transition-colors ${
+              `flex items-center gap-3 h-10 px-3 rounded-md text-sm transition-colors ${
                 isActive
-                  ? 'bg-white/10 text-white font-medium'
-                  : 'text-white/65 hover:bg-white/8 hover:text-white'
+                  ? 'bg-[#E8F4FD] text-[#006BFF] font-medium'
+                  : 'text-[#4B5563] hover:bg-[#F0F0F0] hover:text-[#1A1F36]'
               }`
             }
           >
@@ -51,13 +89,14 @@ export default function Sidebar({ host }) {
           </NavLink>
         ))}
       </nav>
-      <div className="p-5 border-t border-white/10 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-[#006BFF] flex items-center justify-center text-sm font-semibold">
+
+      <div className="p-4 border-t border-[#E5E7EB] flex items-center gap-3">
+        <div className="w-9 h-9 rounded-full bg-[#006BFF] flex items-center justify-center text-sm font-semibold text-white shrink-0">
           {host?.initials || 'JD'}
         </div>
-        <div>
-          <div className="text-sm font-medium">{host?.name || 'John Doe'}</div>
-          <div className="text-xs text-white/50">{host?.email || 'john@example.com'}</div>
+        <div className="min-w-0">
+          <div className="text-sm font-medium text-[#1A1F36] truncate">{host?.name || 'John Doe'}</div>
+          <div className="text-xs text-[#6B7280] truncate">{host?.email || 'john@example.com'}</div>
         </div>
       </div>
     </aside>

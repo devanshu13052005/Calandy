@@ -1,17 +1,18 @@
 const pool = require('../db');
 const { generateSlots } = require('../lib/slots');
-const { wallClockToUtc, getDayOfWeek } = require('../lib/timezone');
+const { wallClockToUtc } = require('../lib/timezone');
+const { SLOT_TAKEN_MESSAGE, hasBookingOverlap } = require('../lib/bookingOverlap');
+const {
+  normalizeDateParam,
+  getAvailabilityWindow,
+  isSlotWithinAvailability,
+  AVAILABILITY_CHANGED_MESSAGE,
+} = require('../lib/availability');
 const {
   sendConfirmationEmail,
   sendCancellationEmail,
   sendRescheduleEmail,
 } = require('../lib/emails');
-
-function formatTime(t) {
-  if (!t) return null;
-  if (typeof t === 'string') return t.slice(0, 5);
-  return t.toISOString ? t.toISOString().slice(11, 16) : String(t).slice(0, 5);
-}
 
 async function getCancelBooking(req, res) {
   try {
@@ -97,17 +98,29 @@ async function rescheduleBooking(req, res) {
     const eventType = etResult.rows[0];
     const hostTimezone = eventType.host_timezone || 'Asia/Kolkata';
 
-    const newStart = await wallClockToUtc(date, time, hostTimezone);
+    const dateKey = normalizeDateParam(date);
+    const newStart = await wallClockToUtc(dateKey, time, hostTimezone);
     const newEnd = new Date(new Date(newStart).getTime() + eventType.duration_minutes * 60000);
 
-    const conflict = await pool.query(
-      `SELECT id FROM bookings
-       WHERE event_type_id=$1 AND status='confirmed'
-       AND id != $2 AND start_time < $3 AND end_time > $4`,
-      [eventType.id, oldBooking.id, newEnd.toISOString(), new Date(newStart).toISOString()]
+    const withinAvailability = await isSlotWithinAvailability(
+      eventType.user_id,
+      dateKey,
+      time,
+      eventType.duration_minutes,
+      hostTimezone
     );
-    if (conflict.rows.length > 0) {
-      return res.status(409).json({ error: 'Slot no longer available' });
+    if (!withinAvailability) {
+      return res.status(409).json({ error: AVAILABILITY_CHANGED_MESSAGE });
+    }
+
+    const overlap = await hasBookingOverlap(
+      eventType.user_id,
+      newStart,
+      newEnd,
+      oldBooking.id
+    );
+    if (overlap) {
+      return res.status(409).json({ error: SLOT_TAKEN_MESSAGE });
     }
 
     await pool.query(
@@ -166,6 +179,7 @@ async function getSlots(req, res) {
   try {
     const { date } = req.query;
     if (!date) return res.status(400).json({ error: 'date required' });
+    const dateKey = normalizeDateParam(date);
 
     const etResult = await pool.query(
       `SELECT et.*, u.timezone as host_timezone FROM event_types et
@@ -177,48 +191,23 @@ async function getSlots(req, res) {
     const eventType = etResult.rows[0];
     const hostTimezone = eventType.host_timezone || 'Asia/Kolkata';
 
-    const scheduleResult = await pool.query(
-      'SELECT * FROM availability_schedules WHERE user_id=$1 AND is_default=true LIMIT 1',
-      [eventType.user_id]
-    );
-    if (scheduleResult.rows.length === 0) return res.json({ slots: [] });
-    const schedule = scheduleResult.rows[0];
+    const window = await getAvailabilityWindow(eventType.user_id, dateKey, hostTimezone);
+    if (!window || window.isOff) return res.json({ slots: [] });
 
-    const overrideResult = await pool.query(
-      'SELECT * FROM date_overrides WHERE schedule_id=$1 AND override_date=$2',
-      [schedule.id, date]
-    );
-
-    let startTime;
-    let endTime;
-
-    if (overrideResult.rows.length > 0) {
-      const override = overrideResult.rows[0];
-      if (override.is_off) return res.json({ slots: [] });
-      startTime = formatTime(override.start_time);
-      endTime = formatTime(override.end_time);
-    } else {
-      const dayOfWeek = await getDayOfWeek(date);
-      const ruleResult = await pool.query(
-        `SELECT start_time, end_time FROM availability_rules
-         WHERE schedule_id=$1 AND day_of_week=$2 AND is_active=true`,
-        [schedule.id, dayOfWeek]
-      );
-      if (ruleResult.rows.length === 0) return res.json({ slots: [] });
-      startTime = formatTime(ruleResult.rows[0].start_time);
-      endTime = formatTime(ruleResult.rows[0].end_time);
-    }
+    const startTime = window.startTime;
+    const endTime = window.endTime;
 
     const bookingsResult = await pool.query(
       `SELECT
-         (EXTRACT(HOUR FROM (start_time AT TIME ZONE $3))::int * 60
-          + EXTRACT(MINUTE FROM (start_time AT TIME ZONE $3))::int) AS start_min,
-         (EXTRACT(HOUR FROM (end_time AT TIME ZONE $3))::int * 60
-          + EXTRACT(MINUTE FROM (end_time AT TIME ZONE $3))::int) AS end_min
-       FROM bookings
-       WHERE event_type_id=$1 AND status='confirmed'
-       AND (start_time AT TIME ZONE $3)::date = $2::date`,
-      [eventType.id, date, hostTimezone]
+         (EXTRACT(HOUR FROM (b.start_time AT TIME ZONE $3))::int * 60
+          + EXTRACT(MINUTE FROM (b.start_time AT TIME ZONE $3))::int) AS start_min,
+         (EXTRACT(HOUR FROM (b.end_time AT TIME ZONE $3))::int * 60
+          + EXTRACT(MINUTE FROM (b.end_time AT TIME ZONE $3))::int) AS end_min
+       FROM bookings b
+       JOIN event_types et ON b.event_type_id = et.id
+       WHERE et.user_id = $1 AND b.status = 'confirmed'
+       AND (b.start_time AT TIME ZONE $3)::date = $2::date`,
+      [eventType.user_id, dateKey, hostTimezone]
     );
 
     const slots = generateSlots(
@@ -247,17 +236,24 @@ async function book(req, res) {
     const eventType = etResult.rows[0];
     const hostTimezone = eventType.host_timezone || 'Asia/Kolkata';
 
-    const start_time = await wallClockToUtc(date, time, hostTimezone);
+    const dateKey = normalizeDateParam(date);
+    const start_time = await wallClockToUtc(dateKey, time, hostTimezone);
     const end_time = new Date(new Date(start_time).getTime() + eventType.duration_minutes * 60000);
 
-    const conflict = await pool.query(
-      `SELECT id FROM bookings
-       WHERE event_type_id=$1 AND status='confirmed'
-       AND start_time < $2 AND end_time > $3`,
-      [eventType.id, end_time.toISOString(), new Date(start_time).toISOString()]
+    const withinAvailability = await isSlotWithinAvailability(
+      eventType.user_id,
+      dateKey,
+      time,
+      eventType.duration_minutes,
+      hostTimezone
     );
-    if (conflict.rows.length > 0) {
-      return res.status(409).json({ error: 'Slot no longer available' });
+    if (!withinAvailability) {
+      return res.status(409).json({ error: AVAILABILITY_CHANGED_MESSAGE });
+    }
+
+    const overlap = await hasBookingOverlap(eventType.user_id, start_time, end_time);
+    if (overlap) {
+      return res.status(409).json({ error: SLOT_TAKEN_MESSAGE });
     }
 
     const bookingResult = await pool.query(

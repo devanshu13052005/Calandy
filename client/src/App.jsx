@@ -3,6 +3,7 @@ import AdminLayout from './components/AdminLayout';
 import Dashboard from './pages/Dashboard';
 import Availability from './pages/Availability';
 import Meetings from './pages/Meetings';
+import Contacts from './pages/Contacts';
 import BookingPage from './pages/BookingPage';
 import BookingConfirm from './pages/BookingConfirm';
 import CancelPage from './pages/CancelPage';
@@ -15,6 +16,7 @@ export default function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/availability" element={<Availability />} />
         <Route path="/meetings" element={<Meetings />} />
+        <Route path="/contacts" element={<Contacts />} />
       </Route>
       <Route path="/cancel/:token" element={<CancelPage />} />
       <Route path="/reschedule/:token" element={<ReschedulePage />} />

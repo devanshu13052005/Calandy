@@ -64,7 +64,10 @@ export default function BookingPage() {
       });
       navigate(`/${slug}/confirmed`, { state: { booking: res.data, eventType } });
     } catch (err) {
-      alert(err.response?.data?.error || 'Booking failed');
+      alert(
+        err.response?.data?.error ||
+          'This slot is already taken, please choose another time'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -122,7 +125,11 @@ export default function BookingPage() {
             />
           </div>
 
-          <div className="flex-1 min-w-[280px] p-10">
+          <div
+            className={`border-l border-[#E5E7EB] p-8 ${
+              selectedTime ? 'flex-1 min-w-[300px]' : 'w-[220px] shrink-0'
+            }`}
+          >
             {selectedTime ? (
               <BookingForm
                 eventType={eventType}

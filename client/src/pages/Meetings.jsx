@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import api from '../api/axios';
+import PageLoader from '../components/PageLoader';
+import AdminRescheduleModal from '../components/AdminRescheduleModal';
 import { formatMeetingRange } from '../utils/formatTime';
 
 function formatMeetingTime(booking) {
@@ -14,6 +16,7 @@ export default function Meetings() {
   const [tab, setTab] = useState('upcoming');
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [rescheduleTarget, setRescheduleTarget] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -33,8 +36,8 @@ export default function Meetings() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold text-[#1A1F36] mb-6">Scheduled Events</h1>
+    <div className="w-full">
+      <h1 className="text-2xl font-semibold text-[#1A1F36] mb-6">Meetings</h1>
       <div className="flex gap-6 border-b border-[#E5E7EB] mb-6">
         {['upcoming', 'past'].map((t) => (
           <button
@@ -53,49 +56,66 @@ export default function Meetings() {
       </div>
 
       {loading ? (
-        <p className="text-[#9CA3AF]">Loading...</p>
+        <PageLoader label="Loading meetings..." />
       ) : meetings.length === 0 ? (
         <div className="text-center py-16 text-[#9CA3AF]">
           <p className="text-lg">No {tab} meetings</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {meetings.map((m) => (
             <div
               key={m.id}
-              className={`bg-white border border-[#E5E7EB] rounded-lg px-5 py-4 flex justify-between items-start ${
+              className={`group flex items-stretch bg-white border border-[#E5E7EB] rounded-lg overflow-hidden transition-all duration-150 hover:shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:border-[#D1D5DB] ${
                 tab === 'past' ? 'opacity-80' : ''
               }`}
             >
-              <div className="flex gap-3">
-                <div
-                  className="w-2 h-2 rounded-full mt-2 shrink-0"
-                  style={{ backgroundColor: m.event_type_color || '#006BFF' }}
-                />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-[15px]">{m.invitee_name}</span>
-                    <span className="text-xs bg-gray-100 text-[#6B7280] px-2 py-0.5 rounded">
+              <div
+                className="w-2 shrink-0"
+                style={{ backgroundColor: m.event_type_color || '#006BFF' }}
+                aria-hidden
+              />
+              <div className="flex-1 flex justify-between items-center gap-4 px-5 py-3 min-w-0">
+                <div className="min-w-0 leading-snug">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-[15px] text-[#1A1F36]">{m.invitee_name}</span>
+                    <span className="text-xs bg-[#F3F4F6] text-[#6B7280] px-2 py-0.5 rounded">
                       {m.event_type_name}
                     </span>
                   </div>
-                  <p className="text-sm text-[#1A1F36] mt-1">{formatMeetingTime(m)}</p>
-                  <p className="text-sm text-[#9CA3AF] mt-1">{m.invitee_email}</p>
+                  <p className="text-[13px] text-[#1A1F36]">{formatMeetingTime(m)}</p>
+                  <p className="text-[13px] text-[#9CA3AF]">{m.invitee_email}</p>
                 </div>
+                {tab === 'upcoming' && (
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setRescheduleTarget(m)}
+                      className="text-[#006BFF] border border-[#006BFF] px-3 py-1.5 rounded-md text-xs font-medium hover:bg-[#006BFF]/5 transition-colors"
+                    >
+                      Reschedule
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCancel(m.id)}
+                      className="text-[#EF4444] border border-[#EF4444] px-3 py-1.5 rounded-md text-xs font-medium hover:bg-red-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
               </div>
-              {tab === 'upcoming' && (
-                <button
-                  type="button"
-                  onClick={() => handleCancel(m.id)}
-                  className="text-[#EF4444] border border-[#EF4444] px-3 py-1 rounded-md text-xs font-medium hover:bg-red-50"
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           ))}
         </div>
       )}
+
+      <AdminRescheduleModal
+        meeting={rescheduleTarget}
+        open={!!rescheduleTarget}
+        onClose={() => setRescheduleTarget(null)}
+        onSuccess={load}
+      />
     </div>
   );
 }
