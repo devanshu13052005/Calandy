@@ -87,22 +87,22 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex justify-center">
-      <div className="flex w-full max-w-5xl min-h-screen">
-        <div className="w-[280px] shrink-0 border-r border-[#E5E7EB] p-8">
-          <div className="w-12 h-12 rounded-full bg-[#006BFF] text-white flex items-center justify-center font-semibold">
+    <div className="min-h-screen bg-[#F3F4F6] flex justify-center items-start pt-12 pb-12 px-4">
+      <div className="w-full max-w-[1100px] bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-[#E5E7EB] overflow-hidden flex min-h-[560px]">
+        <div className="w-[300px] shrink-0 border-r border-[#E5E7EB] p-10">
+          <div className="w-14 h-14 rounded-full bg-[#006BFF] text-white flex items-center justify-center font-semibold text-lg">
             {getInitials(eventType.host_name)}
           </div>
-          <p className="text-sm text-[#6B7280] mt-2">{eventType.host_name}</p>
-          <h1 className="text-[22px] font-semibold text-[#1A1F36] mt-4">{eventType.name}</h1>
-          <div className="flex items-center gap-2 text-sm text-[#6B7280] mt-3">
+          <p className="text-sm text-[#6B7280] mt-3">{eventType.host_name}</p>
+          <h1 className="text-[26px] font-semibold text-[#1A1F36] mt-5 leading-tight">{eventType.name}</h1>
+          <div className="flex items-center gap-2 text-sm text-[#6B7280] mt-4">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {eventType.duration_minutes} min
           </div>
           {eventType.description && (
-            <p className="text-sm text-[#6B7280] mt-4">{eventType.description}</p>
+            <p className="text-sm text-[#6B7280] mt-4 leading-relaxed">{eventType.description}</p>
           )}
           <div className="flex items-center gap-2 text-sm text-[#6B7280] mt-4">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -112,8 +112,9 @@ export default function BookingPage() {
           </div>
         </div>
 
-        <div className="flex-1 flex">
-          <div className="w-[380px] shrink-0 p-8 border-r border-[#E5E7EB]">
+        <div className="flex-1 flex min-w-0">
+          <div className="w-[420px] shrink-0 p-10 border-r border-[#E5E7EB]">
+            <h2 className="text-lg font-semibold text-[#1A1F36] mb-1">Select a Date &amp; Time</h2>
             <CalendarPicker
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
@@ -121,7 +122,7 @@ export default function BookingPage() {
             />
           </div>
 
-          <div className="w-[280px] shrink-0 p-8">
+          <div className="flex-1 min-w-[280px] p-10">
             {selectedTime ? (
               <BookingForm
                 eventType={eventType}

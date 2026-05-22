@@ -1,5 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { format } from 'date-fns';
+import { formatDateAndTime } from '../utils/formatTime';
 
 export default function BookingConfirm() {
   const { slug } = useParams();
@@ -17,7 +17,8 @@ export default function BookingConfirm() {
     );
   }
 
-  const start = new Date(booking.start_time);
+  const tz = booking.host_timezone || eventType?.host_timezone;
+  const { combined } = formatDateAndTime(booking.start_time, tz);
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
@@ -34,7 +35,7 @@ export default function BookingConfirm() {
           <div className="flex items-center gap-3">
             <span className="text-[#9CA3AF]">📅</span>
             <span>
-              {format(start, 'EEEE, MMMM d')} at {format(start, 'h:mm a')}
+              {combined}
             </span>
           </div>
           <div className="flex items-center gap-3">

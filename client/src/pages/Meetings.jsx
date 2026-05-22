@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
 import api from '../api/axios';
+import { formatMeetingRange } from '../utils/formatTime';
 
 function formatMeetingTime(booking) {
-  const start = new Date(booking.start_time);
-  const end = new Date(booking.end_time);
-  const dateStr = format(start, 'EEEE, MMMM d');
-  const timeStr = `${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}`;
-  return `${dateStr} · ${timeStr}`;
+  return formatMeetingRange(
+    booking.start_time,
+    booking.end_time,
+    booking.host_timezone
+  );
 }
 
 export default function Meetings() {

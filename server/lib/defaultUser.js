@@ -1,5 +1,7 @@
 const pool = require('../db');
 
+console.log("DefaultUser: " + process.env.DATABASE_URL);
+
 let defaultUserId = null;
 
 async function initDefaultUser() {

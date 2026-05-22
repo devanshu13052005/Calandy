@@ -1,5 +1,6 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const pool = require('./index');
+const { wallClockToUtc } = require('../lib/timezone');
 
 async function seed() {
   const existing = await pool.query('SELECT id FROM users LIMIT 1');
@@ -50,43 +51,25 @@ async function seed() {
 
   const thirtyMinCall = eventTypeRows.find((e) => e.slug === '30-min-call');
 
+  const hostTimezone = user.timezone || 'Asia/Kolkata';
   const now = new Date();
   const bookings = [
-    {
-      name: 'Alice Johnson',
-      email: 'alice@example.com',
-      daysOffset: 2,
-      hour: 10,
-    },
-    {
-      name: 'Bob Smith',
-      email: 'bob@example.com',
-      daysOffset: 5,
-      hour: 14,
-    },
-    {
-      name: 'Carol Williams',
-      email: 'carol@example.com',
-      daysOffset: -3,
-      hour: 11,
-    },
-    {
-      name: 'David Brown',
-      email: 'david@example.com',
-      daysOffset: -6,
-      hour: 15,
-    },
+    { name: 'Alice Johnson', email: 'alice@example.com', daysOffset: 2, time: '10:00' },
+    { name: 'Bob Smith', email: 'bob@example.com', daysOffset: 5, time: '14:00' },
+    { name: 'Carol Williams', email: 'carol@example.com', daysOffset: -3, time: '11:00' },
+    { name: 'David Brown', email: 'david@example.com', daysOffset: -6, time: '15:00' },
   ];
 
   for (const b of bookings) {
-    const start = new Date(now);
-    start.setDate(start.getDate() + b.daysOffset);
-    start.setUTCHours(b.hour, 0, 0, 0);
-    const end = new Date(start.getTime() + 30 * 60000);
+    const d = new Date(now);
+    d.setDate(d.getDate() + b.daysOffset);
+    const dateStr = d.toISOString().slice(0, 10);
+    const start = await wallClockToUtc(dateStr, b.time, hostTimezone);
+    const end = new Date(new Date(start).getTime() + 30 * 60000);
     await pool.query(
       `INSERT INTO bookings (event_type_id, invitee_name, invitee_email, start_time, end_time, status)
        VALUES ($1, $2, $3, $4, $5, 'confirmed')`,
-      [thirtyMinCall.id, b.name, b.email, start.toISOString(), end.toISOString()]
+      [thirtyMinCall.id, b.name, b.email, new Date(start).toISOString(), end.toISOString()]
     );
   }
 

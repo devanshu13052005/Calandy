@@ -1,8 +1,9 @@
 const transporter = require('./mailer');
 
 async function sendConfirmationEmail(booking, eventType, host) {
+  const tz = eventType.host_timezone || booking.host_timezone || 'Asia/Kolkata';
   const start = new Date(booking.start_time).toLocaleString('en-IN', {
-    timeZone: booking.invitee_timezone || 'Asia/Kolkata',
+    timeZone: tz,
     dateStyle: 'full',
     timeStyle: 'short',
   });
@@ -29,24 +30,23 @@ async function sendCancellationEmail(booking, eventType, cancelledBy) {
     subject: `Cancelled: ${eventType.name}`,
     html: `<h2>Meeting cancelled</h2>
            <p>Hi ${booking.invitee_name},</p>
-           <p>Your <strong>${eventType.name}</strong> on ${new Date(booking.start_time).toLocaleString()} has been cancelled ${cancelledBy === 'host' ? 'by the host' : 'as requested'}.</p>
+           <p>Your <strong>${eventType.name}</strong> on ${new Date(booking.start_time).toLocaleString('en-IN', { timeZone: eventType.host_timezone || 'Asia/Kolkata', dateStyle: 'full', timeStyle: 'short' })} has been cancelled ${cancelledBy === 'host' ? 'by the host' : 'as requested'}.</p>
            <p><a href="${process.env.APP_URL}/${eventType.slug}">Book a new time</a></p>`,
   });
 }
 
 async function sendRescheduleEmail(oldBooking, newBooking, eventType) {
-  const newStart = new Date(newBooking.start_time).toLocaleString('en-IN', {
-    timeZone: newBooking.invitee_timezone || 'Asia/Kolkata',
-    dateStyle: 'full',
-    timeStyle: 'short',
-  });
+  const tz = eventType.host_timezone || newBooking.host_timezone || 'Asia/Kolkata';
+  const fmt = (iso) =>
+    new Date(iso).toLocaleString('en-IN', { timeZone: tz, dateStyle: 'full', timeStyle: 'short' });
+  const newStart = fmt(newBooking.start_time);
   await transporter.sendMail({
     from: `"Scheduler" <${process.env.GMAIL_USER}>`,
     to: newBooking.invitee_email,
     subject: `Rescheduled: ${eventType.name}`,
     html: `<h2>Meeting rescheduled</h2>
            <p>Hi ${newBooking.invitee_name},</p>
-           <p><strong>Old time:</strong> ${new Date(oldBooking.start_time).toLocaleString()}</p>
+           <p><strong>Old time:</strong> ${fmt(oldBooking.start_time)}</p>
            <p><strong>New time:</strong> ${newStart}</p>
            <hr>
            <a href="${process.env.APP_URL}/reschedule/${newBooking.reschedule_token}">Reschedule again</a>

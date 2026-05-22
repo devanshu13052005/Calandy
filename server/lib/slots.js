@@ -9,10 +9,8 @@ function generateSlots(startTime, endTime, durationMinutes, existingBookings) {
     const slotStart = current;
     const slotEnd = current + durationMinutes;
     const hasConflict = existingBookings.some((booking) => {
-      const bStart = new Date(booking.start_time);
-      const bEnd = new Date(booking.end_time);
-      const bStartMin = bStart.getUTCHours() * 60 + bStart.getUTCMinutes();
-      const bEndMin = bEnd.getUTCHours() * 60 + bEnd.getUTCMinutes();
+      const bStartMin = booking.start_min;
+      const bEndMin = booking.end_min;
       return slotStart < bEndMin && slotEnd > bStartMin;
     });
     if (!hasConflict) {

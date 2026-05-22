@@ -8,6 +8,7 @@ const eventTypesRouter = require('./routes/eventTypes');
 const availabilityRouter = require('./routes/availability');
 const meetingsRouter = require('./routes/meetings');
 const publicRouter = require('./routes/public');
+const { error } = require('console');
 
 const app = express();
 app.use(cors({ origin: process.env.APP_URL || 'http://localhost:5173' }));
@@ -30,5 +31,7 @@ initDefaultUser()
   })
   .catch((err) => {
     console.error('Failed to initialize:', err.message);
+    console.error(err);
+    console.error(err.stack);
     process.exit(1);
   });

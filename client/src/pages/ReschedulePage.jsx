@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { format } from 'date-fns';
 import api from '../api/axios';
+import { formatDateAndTime } from '../utils/formatTime';
 import CalendarPicker, { formatDateKey } from '../components/CalendarPicker';
 import TimeSlotPicker from '../components/TimeSlotPicker';
 
@@ -81,7 +81,7 @@ export default function ReschedulePage() {
   }
 
   if (success) {
-    const start = new Date(success.start_time);
+    const { combined } = formatDateAndTime(success.start_time, success.host_timezone);
     return (
       <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
         <div className="bg-white rounded-lg max-w-[480px] w-full p-8 text-center">
@@ -90,30 +90,30 @@ export default function ReschedulePage() {
           </div>
           <h1 className="text-2xl font-semibold mt-6">You&apos;re rescheduled!</h1>
           <p className="text-[#6B7280] mt-2 text-sm">
-            New time: {format(start, 'EEEE, MMMM d')} at {format(start, 'h:mm a')}
+            New time: {combined}
           </p>
         </div>
       </div>
     );
   }
 
-  const oldStart = new Date(booking.start_time);
+  const { combined: oldTime } = formatDateAndTime(booking.start_time, booking.host_timezone);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[#F3F4F6]">
       <div className="bg-[#006BFF]/10 border-b border-[#006BFF]/20 px-6 py-3 text-center text-sm text-[#1A1F36]">
-        You are rescheduling: <strong>{booking.event_name}</strong> on{' '}
-        {format(oldStart, 'EEEE, MMMM d')} at {format(oldStart, 'h:mm a')}
+        You are rescheduling: <strong>{booking.event_name}</strong> on {oldTime}
       </div>
-      <div className="flex justify-center max-w-5xl mx-auto">
-        <div className="w-[380px] shrink-0 p-8 border-r border-[#E5E7EB]">
+      <div className="flex justify-center pt-10 pb-10 px-4">
+        <div className="flex max-w-[900px] w-full bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-[#E5E7EB] overflow-hidden min-h-[480px]">
+        <div className="w-[420px] shrink-0 p-10 border-r border-[#E5E7EB]">
           <CalendarPicker
             selectedDate={selectedDate}
             onSelectDate={setSelectedDate}
             availableDays={availableDays}
           />
         </div>
-        <div className="w-[280px] shrink-0 p-8">
+        <div className="flex-1 p-10">
           <TimeSlotPicker
             selectedDate={selectedDate}
             slots={slots}
@@ -131,6 +131,7 @@ export default function ReschedulePage() {
               {submitting ? 'Saving...' : 'Confirm New Time'}
             </button>
           )}
+        </div>
         </div>
       </div>
     </div>

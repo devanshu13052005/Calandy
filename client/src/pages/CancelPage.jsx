@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { format } from 'date-fns';
 import api from '../api/axios';
+import { formatDateAndTime } from '../utils/formatTime';
 
 export default function CancelPage() {
   const { token } = useParams();
@@ -71,7 +71,7 @@ export default function CancelPage() {
     );
   }
 
-  const start = new Date(booking.start_time);
+  const { combined } = formatDateAndTime(booking.start_time, booking.host_timezone);
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
@@ -82,7 +82,7 @@ export default function CancelPage() {
             <strong>{booking.event_name}</strong>
           </p>
           <p className="text-[#6B7280]">
-            {format(start, 'EEEE, MMMM d')} at {format(start, 'h:mm a')}
+            {combined}
           </p>
           <p className="text-[#6B7280]">with {booking.host_name}</p>
         </div>
