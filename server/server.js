@@ -13,7 +13,7 @@ const schedulesRouter = require('./routes/schedules');
 const { error } = require('console');
 
 const app = express();
-app.use(cors({ origin: process.env.APP_URL || 'http://localhost:5174' }));
+app.use(cors({ origin: process.env.APP_URL || 'https://tayal-project-2.onrender.com' }));
 app.use(express.json());
 
 app.use('/api/event-types', eventTypesRouter);
