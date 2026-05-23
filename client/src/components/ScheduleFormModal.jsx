@@ -1,14 +1,9 @@
 import { useEffect, useState } from 'react';
-
-const DAY_ORDER = [
-  { day: 'sunday', label: 'Sun' },
-  { day: 'monday', label: 'Mon' },
-  { day: 'tuesday', label: 'Tue' },
-  { day: 'wednesday', label: 'Wed' },
-  { day: 'thursday', label: 'Thu' },
-  { day: 'friday', label: 'Fri' },
-  { day: 'saturday', label: 'Sat' },
-];
+import {
+  DAY_ORDER,
+  TIME_OPTIONS,
+  defaultWeeklyAvailability,
+} from '../utils/scheduleWeekly';
 
 const TIMEZONES = [
   'Asia/Kolkata',
@@ -22,28 +17,7 @@ const TIMEZONES = [
   'UTC',
 ];
 
-function buildTimeOptions() {
-  const opts = [];
-  for (let h = 0; h < 24; h++) {
-    for (const m of [0, 30]) {
-      opts.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-    }
-  }
-  return opts;
-}
-
-const TIME_OPTIONS = buildTimeOptions();
-
-export function defaultWeeklyAvailability() {
-  return DAY_ORDER.map(({ day }) => ({
-    day,
-    isActive: day !== 'saturday' && day !== 'sunday',
-    slots:
-      day !== 'saturday' && day !== 'sunday'
-        ? [{ startTime: '09:00', endTime: '17:00' }]
-        : [],
-  }));
-}
+export { defaultWeeklyAvailability };
 
 export default function ScheduleFormModal({ open, onClose, onSave, initial }) {
   const [name, setName] = useState('');
@@ -121,7 +95,11 @@ export default function ScheduleFormModal({ open, onClose, onSave, initial }) {
     e.preventDefault();
     setSaving(true);
     try {
-      await onSave({ name: name.trim(), timezone, weeklyAvailability });
+      await onSave({
+        name: name.trim(),
+        timezone: timezone || 'Asia/Kolkata',
+        weeklyAvailability,
+      });
     } finally {
       setSaving(false);
     }
@@ -170,7 +148,9 @@ export default function ScheduleFormModal({ open, onClose, onSave, initial }) {
             <div>
               <h3 className="text-sm font-medium text-[#6B7280] mb-2">Weekly hours</h3>
               <div className="space-y-1">
-                {DAY_ORDER.map(({ day, label }) => {
+                {DAY_ORDER.map(({ day }) => {
+                  const label = day.slice(0, 3);
+                  const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
                   const entry = weeklyAvailability.find((d) => d.day === day);
                   return (
                     <div
@@ -189,7 +169,7 @@ export default function ScheduleFormModal({ open, onClose, onSave, initial }) {
                           />
                           <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:bg-[#006BFF] after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
                         </label>
-                        <span className="w-10 text-sm font-medium">{label}</span>
+                        <span className="w-10 text-sm font-medium">{labelCap}</span>
                         {entry?.isActive ? (
                           <div className="flex-1 space-y-2">
                             {(entry.slots || []).map((slot, idx) => (

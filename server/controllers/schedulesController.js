@@ -30,7 +30,8 @@ async function list(req, res) {
 async function create(req, res) {
   try {
     const userId = getDefaultUserId();
-    const { name, timezone, weeklyAvailability } = req.body;
+    const { name, weeklyAvailability } = req.body;
+    const timezone = req.body.timezone || 'Asia/Kolkata';
     if (!name?.trim()) {
       return res.status(400).json({ error: 'Schedule name is required' });
     }
@@ -39,7 +40,7 @@ async function create(req, res) {
       `INSERT INTO availability_schedules (user_id, name, is_default, timezone)
        VALUES ($1, $2, false, $3)
        RETURNING *`,
-      [userId, name.trim(), timezone || 'Asia/Kolkata']
+      [userId, name.trim(), timezone]
     );
     const schedule = result.rows[0];
 
@@ -58,7 +59,8 @@ async function create(req, res) {
 async function update(req, res) {
   try {
     const userId = getDefaultUserId();
-    const { name, timezone, weeklyAvailability } = req.body;
+    const { name, weeklyAvailability } = req.body;
+    const timezone = req.body.timezone || 'Asia/Kolkata';
 
     const existing = await pool.query(
       'SELECT * FROM availability_schedules WHERE id = $1 AND user_id = $2',
@@ -69,17 +71,18 @@ async function update(req, res) {
     }
 
     const schedule = existing.rows[0];
+    const resolvedTimezone =
+      req.body.timezone !== undefined && req.body.timezone !== null && req.body.timezone !== ''
+        ? timezone
+        : schedule.timezone || 'Asia/Kolkata';
+
     const updated = await pool.query(
       `UPDATE availability_schedules
        SET name = COALESCE($1, name),
-           timezone = COALESCE($2, timezone)
+           timezone = $2
        WHERE id = $3
        RETURNING *`,
-      [
-        name?.trim() || schedule.name,
-        timezone || schedule.timezone,
-        schedule.id,
-      ]
+      [name?.trim() || schedule.name, resolvedTimezone, schedule.id]
     );
 
     if (weeklyAvailability) {

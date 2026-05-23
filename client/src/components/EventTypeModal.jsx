@@ -24,13 +24,34 @@ export default function EventTypeModal({ open, onClose, onSave, initial }) {
   const [schedules, setSchedules] = useState([]);
   const [schedulesLoading, setSchedulesLoading] = useState(false);
 
+  const loadSchedules = () => {
+    setSchedulesLoading(true);
+    return api
+      .get('/schedules')
+      .then((res) => {
+        console.log('[EventTypeModal] GET /schedules response:', res.data);
+        const list = Array.isArray(res.data) ? res.data : [];
+        setSchedules(list);
+        return list;
+      })
+      .catch((err) => {
+        console.error('[EventTypeModal] Failed to load schedules:', err);
+        setSchedules([]);
+        return [];
+      })
+      .finally(() => setSchedulesLoading(false));
+  };
+
   useEffect(() => {
     if (!open) return;
-    setSchedulesLoading(true);
-    api
-      .get('/schedules')
-      .then((res) => setSchedules(Array.isArray(res.data) ? res.data : []))
-      .finally(() => setSchedulesLoading(false));
+    loadSchedules();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onSchedulesUpdated = () => loadSchedules();
+    window.addEventListener('schedules-updated', onSchedulesUpdated);
+    return () => window.removeEventListener('schedules-updated', onSchedulesUpdated);
   }, [open]);
 
   useEffect(() => {
