@@ -13,7 +13,7 @@ export default function CalendarPicker({ selectedDate, onSelectDate, availableDa
   };
 
   return (
-    <div>
+    <div className="w-full min-w-0 overflow-x-auto">
       <h3 className="text-base font-medium mb-4">Select a Date</h3>
       <Calendar
         value={selectedDate}

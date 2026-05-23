@@ -1,5 +1,7 @@
 const pool = require('../db');
 const { getDefaultUserId } = require('../lib/defaultUser');
+const { resolveScheduleId } = require('../lib/scheduleQueries');
+const { ensureDefaultScheduleForUser } = require('../lib/defaultSchedule');
 
 async function list(req, res) {
   try {
@@ -15,11 +17,21 @@ async function list(req, res) {
 
 async function create(req, res) {
   try {
-    const { name, slug, duration_minutes, description, color } = req.body;
+    const userId = getDefaultUserId();
+    const { name, slug, duration_minutes, description, color, schedule_id } = req.body;
+    const scheduleId = await resolveScheduleId(userId, schedule_id);
     const result = await pool.query(
-      `INSERT INTO event_types (user_id, name, slug, duration_minutes, description, color)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [getDefaultUserId(), name, slug, duration_minutes, description || null, color || '#006BFF']
+      `INSERT INTO event_types (user_id, name, slug, duration_minutes, description, color, schedule_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [
+        userId,
+        name,
+        slug,
+        duration_minutes,
+        description || null,
+        color || '#006BFF',
+        scheduleId,
+      ]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -29,12 +41,26 @@ async function create(req, res) {
 
 async function update(req, res) {
   try {
-    const { name, slug, duration_minutes, description, color } = req.body;
-    const result = await pool.query(
-      `UPDATE event_types SET name=$1, slug=$2, duration_minutes=$3, description=$4, color=$5, updated_at=NOW()
-       WHERE id=$6 RETURNING *`,
-      [name, slug, duration_minutes, description, color, req.params.id]
-    );
+    const userId = getDefaultUserId();
+    const { name, slug, duration_minutes, description, color, schedule_id } = req.body;
+
+    let result;
+    if (schedule_id !== undefined) {
+      const scheduleId = await resolveScheduleId(userId, schedule_id);
+      result = await pool.query(
+        `UPDATE event_types SET
+           name=$1, slug=$2, duration_minutes=$3, description=$4, color=$5,
+           schedule_id=$6, updated_at=NOW()
+         WHERE id=$7 RETURNING *`,
+        [name, slug, duration_minutes, description, color, scheduleId, req.params.id]
+      );
+    } else {
+      result = await pool.query(
+        `UPDATE event_types SET name=$1, slug=$2, duration_minutes=$3, description=$4, color=$5, updated_at=NOW()
+         WHERE id=$6 RETURNING *`,
+        [name, slug, duration_minutes, description, color, req.params.id]
+      );
+    }
     if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' });
     res.json(result.rows[0]);
   } catch (err) {
@@ -106,7 +132,17 @@ async function removeQuestion(req, res) {
   }
 }
 
+async function ensureSchedules(req, res, next) {
+  try {
+    await ensureDefaultScheduleForUser(getDefaultUserId());
+    next();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
+  ensureSchedules,
   list,
   create,
   update,

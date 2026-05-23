@@ -8,6 +8,7 @@ const booking = require('./booking');
 const bookingQuestion = require('./bookingQuestion');
 const bookingAnswer = require('./bookingAnswer');
 const indexes = require('./indexes');
+const alterations = require('./alterations');
 
 const schemas = [
   extension,
@@ -26,6 +27,7 @@ async function runMigrations(pool) {
   for (const sql of schemas) {
     await pool.query(sql);
   }
+  await pool.query(alterations);
 }
 
 module.exports = { schemas, runMigrations };

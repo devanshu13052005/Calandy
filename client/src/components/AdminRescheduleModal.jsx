@@ -56,22 +56,22 @@ export default function AdminRescheduleModal({ meeting, open, onClose, onSuccess
   if (!open || !meeting) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <button type="button" className="absolute inset-0 bg-black/40" onClick={onClose} aria-label="Close" />
-      <div className="relative bg-white rounded-xl shadow-xl border border-[#E5E7EB] w-full max-w-[720px] max-h-[90vh] overflow-y-auto p-6">
+      <div className="relative bg-white rounded-t-xl sm:rounded-xl shadow-xl border border-[#E5E7EB] w-full max-w-[720px] max-h-[92vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <h2 className="text-lg font-semibold text-[#1A1F36] mb-1">Reschedule meeting</h2>
         <p className="text-sm text-[#6B7280] mb-4">
           {meeting.invitee_name} · {meeting.event_type_name}
         </p>
-        <div className="flex gap-6 flex-col sm:flex-row">
-          <div className="flex-1">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <div className="flex-1 min-w-0">
             <CalendarPicker
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
               availableDays={availableDays}
             />
           </div>
-          <div className="w-full sm:w-[200px] shrink-0">
+          <div className="w-full lg:w-[220px] shrink-0 min-w-0">
             <TimeSlotPicker
               selectedDate={selectedDate}
               slots={slots}
@@ -81,7 +81,7 @@ export default function AdminRescheduleModal({ meeting, open, onClose, onSuccess
             />
           </div>
         </div>
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 mt-6">
           <button
             type="button"
             onClick={onClose}

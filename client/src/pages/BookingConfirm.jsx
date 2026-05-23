@@ -21,12 +21,12 @@ export default function BookingConfirm() {
   const { combined } = formatDateAndTime(booking.start_time, tz);
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
-      <div className="bg-white rounded-lg shadow-sm border border-[#E5E7EB] max-w-[480px] w-full p-8 text-center">
+    <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4 sm:p-6">
+      <div className="bg-white rounded-lg shadow-sm border border-[#E5E7EB] max-w-[480px] w-full p-6 sm:p-8 text-center">
         <div className="w-[60px] h-[60px] rounded-full bg-[#DCFCE7] text-[#00A86B] flex items-center justify-center mx-auto text-2xl font-bold">
           ✓
         </div>
-        <h1 className="text-2xl font-semibold mt-6">You&apos;re scheduled!</h1>
+        <h1 className="text-xl sm:text-2xl font-semibold mt-6">You&apos;re scheduled!</h1>
         <p className="text-[#6B7280] mt-2 text-sm">
           A confirmation email has been sent to {booking.invitee_email}
         </p>

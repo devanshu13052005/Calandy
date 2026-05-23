@@ -89,10 +89,10 @@ export default function CancelPage() {
         <p className="text-sm text-[#6B7280] mb-6 text-center">
           Are you sure you want to cancel this event?
         </p>
-        <div className="flex gap-3">
+        <div className="flex flex-col-reverse sm:flex-row gap-3">
           <Link
             to="/"
-            className="flex-1 text-center py-2 border border-[#E5E7EB] rounded-md text-sm text-[#6B7280] hover:bg-gray-50"
+            className="flex-1 text-center py-2.5 border border-[#E5E7EB] rounded-md text-sm text-[#6B7280] hover:bg-gray-50"
           >
             Keep Event
           </Link>
@@ -100,7 +100,7 @@ export default function CancelPage() {
             type="button"
             onClick={handleCancel}
             disabled={cancelling}
-            className="flex-1 py-2 bg-[#EF4444] text-white rounded-md text-sm font-medium hover:bg-red-600 disabled:opacity-50"
+            className="flex-1 py-2.5 bg-[#EF4444] text-white rounded-md text-sm font-medium hover:bg-red-600 disabled:opacity-50"
           >
             Cancel Event
           </button>

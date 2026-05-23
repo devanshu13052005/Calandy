@@ -4,12 +4,15 @@ console.log("DefaultUser: " + process.env.DATABASE_URL);
 
 let defaultUserId = null;
 
+const { ensureDefaultScheduleForUser } = require('./defaultSchedule');
+
 async function initDefaultUser() {
   const result = await pool.query('SELECT id FROM users LIMIT 1');
   if (result.rows.length === 0) {
     throw new Error('No default user found. Run seed first.');
   }
   defaultUserId = result.rows[0].id;
+  await ensureDefaultScheduleForUser(defaultUserId);
   return defaultUserId;
 }
 

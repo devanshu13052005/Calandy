@@ -7,6 +7,7 @@ CREATE TABLE event_types (
   duration_minutes INT NOT NULL CHECK (duration_minutes > 0),
   description TEXT,
   color VARCHAR(7) DEFAULT '#006BFF',
+  schedule_id UUID REFERENCES availability_schedules(id) ON DELETE SET NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),

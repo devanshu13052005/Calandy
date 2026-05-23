@@ -4,33 +4,36 @@ import api from '../api/axios';
 import EventTypeCard from '../components/EventTypeCard';
 import EventTypeModal from '../components/EventTypeModal';
 import PageLoader from '../components/PageLoader';
-import { buildAvailabilitySummary } from '../utils/availabilitySummary';
+import { buildScheduleSummary } from '../utils/scheduleSummary';
 
 const HOST = { name: 'John Doe', initials: 'JD' };
 
 export default function Dashboard() {
   const location = useLocation();
   const [eventTypes, setEventTypes] = useState([]);
-  const [availabilityRules, setAvailabilityRules] = useState([]);
+  const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  const availabilityText = useMemo(
-    () => buildAvailabilitySummary(availabilityRules),
-    [availabilityRules]
-  );
+  const scheduleSummaryById = useMemo(() => {
+    const map = {};
+    for (const s of schedules) {
+      map[s.id] = buildScheduleSummary(s.weeklyAvailability);
+    }
+    return map;
+  }, [schedules]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [typesRes, availRes] = await Promise.all([
+      const [typesRes, schedulesRes] = await Promise.all([
         api.get('/event-types'),
-        api.get('/availability'),
+        api.get('/schedules'),
       ]);
       setEventTypes(typesRes.data);
-      setAvailabilityRules(availRes.data.rules || []);
+      setSchedules(Array.isArray(schedulesRes.data) ? schedulesRes.data : []);
     } finally {
       setLoading(false);
     }
@@ -86,15 +89,15 @@ export default function Dashboard() {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-[#1A1F36]">Scheduling</h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
+        <h1 className="text-xl sm:text-2xl font-semibold text-[#1A1F36]">Scheduling</h1>
         <button
           type="button"
           onClick={() => {
             setEditing(null);
             setModalOpen(true);
           }}
-          className="bg-[#006BFF] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700"
+          className="w-full sm:w-auto bg-[#006BFF] text-white px-5 py-2 rounded-full text-sm font-medium hover:bg-blue-700"
         >
           + Create
         </button>
@@ -129,7 +132,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-[#006BFF] text-white flex items-center justify-center text-xs font-semibold">
             {HOST.initials}
@@ -177,7 +180,11 @@ export default function Dashboard() {
             <EventTypeCard
               key={et.id}
               eventType={et}
-              availabilityText={availabilityText}
+              availabilityText={
+                scheduleSummaryById[et.schedule_id] ||
+                scheduleSummaryById[schedules.find((s) => s.isDefault)?.id] ||
+                'No availability set'
+              }
               onEdit={(item) => {
                 setEditing(item);
                 setModalOpen(true);

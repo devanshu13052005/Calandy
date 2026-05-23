@@ -35,8 +35,8 @@ async function findOverlappingBookings(userId, newStart, newEnd, excludeBookingI
      JOIN event_types et ON b.event_type_id = et.id
      WHERE et.user_id = $1
        AND b.status = 'confirmed'
-       AND b.start_time < $2
-       AND b.end_time > $3
+       AND b.start_time < $3
+       AND b.end_time > $2
        ${excludeClause}`,
     params
   );

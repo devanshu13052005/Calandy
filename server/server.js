@@ -9,13 +9,15 @@ const availabilityRouter = require('./routes/availability');
 const meetingsRouter = require('./routes/meetings');
 const contactsRouter = require('./routes/contacts');
 const publicRouter = require('./routes/public');
+const schedulesRouter = require('./routes/schedules');
 const { error } = require('console');
 
 const app = express();
-app.use(cors({ origin: process.env.APP_URL || 'http://localhost:5173' }));
+app.use(cors({ origin: process.env.APP_URL || 'http://localhost:5174' }));
 app.use(express.json());
 
 app.use('/api/event-types', eventTypesRouter);
+app.use('/api/schedules', schedulesRouter);
 app.use('/api/availability', availabilityRouter);
 app.use('/api/meetings', meetingsRouter);
 app.use('/api/contacts', contactsRouter);

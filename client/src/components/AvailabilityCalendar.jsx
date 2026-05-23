@@ -25,21 +25,41 @@ function formatHours12(time) {
   return `${hour12}:${String(m).padStart(2, '0')}${period}`;
 }
 
-function buildDayHours(date, rules, overridesMap) {
+/**
+ * Returns the working hours text for a day, or null if the day is off.
+ * Also returns whether the day has an override.
+ */
+function buildDayInfo(date, rules, overridesMap) {
   const key = format(date, 'yyyy-MM-dd');
-  if (overridesMap[key]) {
-    const o = overridesMap[key];
-    if (o.is_off) return null;
-    return `${formatHours12(o.start_time)} – ${formatHours12(o.end_time)}`;
+  const override = overridesMap[key] || null;
+
+  if (override) {
+    if (override.is_off) {
+      return { hours: null, override, isOff: true };
+    }
+    return {
+      hours: `${formatHours12(override.start_time)} – ${formatHours12(override.end_time)}`,
+      override,
+      isOff: false,
+    };
   }
+
   const rule = rules.find((r) => r.day_of_week === date.getDay() && r.is_active);
-  if (!rule) return null;
-  return `${formatHours12(rule.start_time)} – ${formatHours12(rule.end_time)}`;
+  if (!rule) return { hours: null, override: null, isOff: true };
+  return {
+    hours: `${formatHours12(rule.start_time)} – ${formatHours12(rule.end_time)}`,
+    override: null,
+    isOff: false,
+  };
 }
 
 export default function AvailabilityCalendar({ rules, overrides }) {
   const [month, setMonth] = useState(startOfMonth(new Date()));
 
+  // Build a key→override map.
+  // override_date comes back as a plain YYYY-MM-DD string from the fixed backend,
+  // so the string branch is always hit. The Date fallback uses LOCAL getters to
+  // avoid the UTC-offset shift (same fix applied server-side).
   const overridesMap = useMemo(() => {
     const map = {};
     for (const o of overrides) {
@@ -48,7 +68,10 @@ export default function AvailabilityCalendar({ rules, overrides }) {
         key = o.override_date.slice(0, 10);
       } else {
         const dt = new Date(o.override_date);
-        key = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+        const y = dt.getFullYear();
+        const mo = String(dt.getMonth() + 1).padStart(2, '0');
+        const da = String(dt.getDate()).padStart(2, '0');
+        key = `${y}-${mo}-${da}`;
       }
       map[key] = o;
     }
@@ -65,6 +88,7 @@ export default function AvailabilityCalendar({ rules, overrides }) {
 
   return (
     <div>
+      {/* Month navigation */}
       <div className="flex items-center justify-between mb-4">
         <button
           type="button"
@@ -85,37 +109,79 @@ export default function AvailabilityCalendar({ rules, overrides }) {
         </button>
       </div>
 
-      <div className="grid grid-cols-7 border border-[#E5E7EB] rounded-lg overflow-hidden">
+      <div className="overflow-x-auto -mx-1 px-1 sm:mx-0 sm:px-0">
+      <div className="availability-month-grid grid grid-cols-7 border border-[#E5E7EB] rounded-lg overflow-hidden">
+        {/* Day-of-week headers */}
         {DAY_HEADERS.map((d) => (
           <div
             key={d}
-            className="bg-[#FAFAFA] text-[11px] font-medium text-[#6B7280] py-2 text-center border-b border-[#E5E7EB]"
+            className="bg-[#FAFAFA] text-[10px] sm:text-[11px] font-medium text-[#6B7280] py-1.5 sm:py-2 text-center border-b border-[#E5E7EB]"
           >
             {d}
           </div>
         ))}
+
+        {/* Leading blank cells */}
         {Array.from({ length: leadingBlanks }).map((_, i) => (
-          <div key={`blank-${i}`} className="min-h-[88px] bg-[#FAFAFA] border-b border-r border-[#E5E7EB] last:border-r-0" />
+          <div key={`blank-${i}`} className="min-h-[64px] sm:min-h-[88px] bg-[#FAFAFA] border-b border-r border-[#E5E7EB] last:border-r-0" />
         ))}
+
+        {/* Day cells */}
         {days.map((date) => {
-          const hours = buildDayHours(date, rules, overridesMap);
+          const { hours, override, isOff } = buildDayInfo(date, rules, overridesMap);
           const inMonth = isSameMonth(date, month);
+
+          // Determine cell background based on override status
+          let cellBg = inMonth ? 'bg-white' : 'bg-[#FAFAFA]';
+          let cellBorder = 'border-b border-r border-[#E5E7EB]';
+          if (override && inMonth) {
+            if (override.is_off) {
+              cellBg = 'bg-red-50';
+              cellBorder = 'border-b border-r border-red-200 border-l-2 border-l-red-400';
+            } else {
+              cellBg = 'bg-blue-50';
+              cellBorder = 'border-b border-r border-blue-200 border-l-2 border-l-[#006BFF]';
+            }
+          }
+
           return (
             <div
               key={date.toISOString()}
-              className={`min-h-[88px] p-2 border-b border-r border-[#E5E7EB] last:border-r-0 ${
-                inMonth ? 'bg-white' : 'bg-[#FAFAFA]'
-              }`}
+              className={`min-h-[64px] sm:min-h-[88px] p-1.5 sm:p-2 last:border-r-0 ${cellBg} ${cellBorder}`}
             >
               <div className="text-sm font-medium text-[#1A1F36] mb-1">{format(date, 'd')}</div>
+
+              {/* Override badge — only shown for days that have an override */}
+              {override && inMonth && (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    borderRadius: '4px',
+                    padding: '2px 5px',
+                    marginBottom: '3px',
+                    background: override.is_off ? '#FEE2E2' : '#DBEAFE',
+                    color: override.is_off ? '#DC2626' : '#1D4ED8',
+                    letterSpacing: '0.02em',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Override
+                </span>
+              )}
+
               {hours ? (
                 <p className="text-[11px] text-[#6B7280] leading-snug">{hours}</p>
               ) : (
-                <p className="text-[11px] text-[#D1D5DB]">—</p>
+                <p className={`text-[11px] leading-snug ${override && override.is_off && inMonth ? 'text-red-400' : 'text-[#D1D5DB]'}`}>
+                  {override && override.is_off && inMonth ? 'Off' : '—'}
+                </p>
               )}
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

@@ -37,7 +37,7 @@ export default function Meetings() {
 
   return (
     <div className="w-full">
-      <h1 className="text-2xl font-semibold text-[#1A1F36] mb-6">Meetings</h1>
+      <h1 className="text-xl sm:text-2xl font-semibold text-[#1A1F36] mb-6">Meetings</h1>
       <div className="flex gap-6 border-b border-[#E5E7EB] mb-6">
         {['upcoming', 'past'].map((t) => (
           <button
@@ -75,7 +75,7 @@ export default function Meetings() {
                 style={{ backgroundColor: m.event_type_color || '#006BFF' }}
                 aria-hidden
               />
-              <div className="flex-1 flex justify-between items-center gap-4 px-5 py-3 min-w-0">
+              <div className="flex-1 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center sm:gap-4 px-4 sm:px-5 py-3 min-w-0">
                 <div className="min-w-0 leading-snug">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-[15px] text-[#1A1F36]">{m.invitee_name}</span>
@@ -87,7 +87,7 @@ export default function Meetings() {
                   <p className="text-[13px] text-[#9CA3AF]">{m.invitee_email}</p>
                 </div>
                 {tab === 'upcoming' && (
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex flex-wrap gap-2 shrink-0">
                     <button
                       type="button"
                       onClick={() => setRescheduleTarget(m)}

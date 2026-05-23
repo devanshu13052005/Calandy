@@ -31,13 +31,13 @@ export default function BookingPage() {
       .get(`/public/${slug}`)
       .then((res) => setEventType(res.data))
       .catch(() => setError('Event not found'));
-    api.get('/availability').then((res) => {
-      const days = (res.data.rules || [])
-        .filter((r) => r.is_active)
-        .map((r) => r.day_of_week);
-      if (days.length) setAvailableDays(days);
-    });
   }, [slug]);
+
+  useEffect(() => {
+    if (eventType?.available_days?.length) {
+      setAvailableDays(eventType.available_days);
+    }
+  }, [eventType]);
 
   useEffect(() => {
     if (!selectedDate || !slug) return;
@@ -75,7 +75,7 @@ export default function BookingPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-[#6B7280]">
+      <div className="min-h-screen flex items-center justify-center p-4 text-[#6B7280] text-center">
         {error}
       </div>
     );
@@ -83,41 +83,43 @@ export default function BookingPage() {
 
   if (!eventType) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-[#9CA3AF]">
+      <div className="min-h-screen flex items-center justify-center p-4 text-[#9CA3AF]">
         Loading...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] flex justify-center items-start pt-12 pb-12 px-4">
-      <div className="w-full max-w-[1100px] bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-[#E5E7EB] overflow-hidden flex min-h-[560px]">
-        <div className="w-[300px] shrink-0 border-r border-[#E5E7EB] p-10">
-          <div className="w-14 h-14 rounded-full bg-[#006BFF] text-white flex items-center justify-center font-semibold text-lg">
+    <div className="min-h-screen bg-[#F3F4F6] flex justify-center items-start py-6 sm:py-12 px-3 sm:px-4">
+      <div className="w-full max-w-[1100px] bg-white rounded-xl sm:rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-[#E5E7EB] overflow-hidden flex flex-col lg:flex-row lg:min-h-[560px]">
+        <div className="w-full lg:w-[280px] xl:w-[300px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#E5E7EB] p-6 sm:p-8 lg:p-10">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#006BFF] text-white flex items-center justify-center font-semibold text-base sm:text-lg">
             {getInitials(eventType.host_name)}
           </div>
           <p className="text-sm text-[#6B7280] mt-3">{eventType.host_name}</p>
-          <h1 className="text-[26px] font-semibold text-[#1A1F36] mt-5 leading-tight">{eventType.name}</h1>
-          <div className="flex items-center gap-2 text-sm text-[#6B7280] mt-4">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h1 className="text-xl sm:text-2xl xl:text-[26px] font-semibold text-[#1A1F36] mt-4 sm:mt-5 leading-tight">
+            {eventType.name}
+          </h1>
+          <div className="flex items-center gap-2 text-sm text-[#6B7280] mt-3 sm:mt-4">
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             {eventType.duration_minutes} min
           </div>
           {eventType.description && (
-            <p className="text-sm text-[#6B7280] mt-4 leading-relaxed">{eventType.description}</p>
+            <p className="text-sm text-[#6B7280] mt-3 sm:mt-4 leading-relaxed">{eventType.description}</p>
           )}
-          <div className="flex items-center gap-2 text-sm text-[#6B7280] mt-4">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center gap-2 text-sm text-[#6B7280] mt-3 sm:mt-4">
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
             </svg>
-            {eventType.host_timezone || 'Asia/Kolkata'}
+            <span className="truncate">{eventType.host_timezone || 'Asia/Kolkata'}</span>
           </div>
         </div>
 
-        <div className="flex-1 flex min-w-0">
-          <div className="w-[420px] shrink-0 p-10 border-r border-[#E5E7EB]">
-            <h2 className="text-lg font-semibold text-[#1A1F36] mb-1">Select a Date &amp; Time</h2>
+        <div className="flex-1 flex flex-col md:flex-row min-w-0">
+          <div className="w-full md:w-1/2 lg:flex-1 md:max-w-none border-b md:border-b-0 md:border-r border-[#E5E7EB] p-6 sm:p-8 lg:p-10">
+            <h2 className="text-base sm:text-lg font-semibold text-[#1A1F36] mb-1">Select a Date &amp; Time</h2>
             <CalendarPicker
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
@@ -126,8 +128,8 @@ export default function BookingPage() {
           </div>
 
           <div
-            className={`border-l border-[#E5E7EB] p-8 ${
-              selectedTime ? 'flex-1 min-w-[300px]' : 'w-[220px] shrink-0'
+            className={`w-full md:w-1/2 lg:w-auto p-6 sm:p-8 min-w-0 ${
+              selectedTime ? 'md:flex-1 lg:min-w-[280px]' : 'lg:w-[320px] shrink-0'
             }`}
           >
             {selectedTime ? (

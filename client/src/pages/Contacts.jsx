@@ -28,7 +28,7 @@ export default function Contacts() {
 
   return (
     <div className="w-full">
-      <h1 className="text-2xl font-semibold text-[#1A1F36]">Contacts</h1>
+      <h1 className="text-xl sm:text-2xl font-semibold text-[#1A1F36]">Contacts</h1>
       <p className="text-[#6B7280] mt-1 mb-6">
         People you have completed meetings with
       </p>

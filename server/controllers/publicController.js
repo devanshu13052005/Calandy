@@ -4,10 +4,11 @@ const { wallClockToUtc } = require('../lib/timezone');
 const { SLOT_TAKEN_MESSAGE, hasBookingOverlap } = require('../lib/bookingOverlap');
 const {
   normalizeDateParam,
-  getAvailabilityWindow,
+  getAvailabilityForDate,
   isSlotWithinAvailability,
   AVAILABILITY_CHANGED_MESSAGE,
 } = require('../lib/availability');
+const { fetchRulesForSchedule, resolveScheduleId } = require('../lib/scheduleQueries');
 const {
   sendConfirmationEmail,
   sendCancellationEmail,
@@ -107,7 +108,8 @@ async function rescheduleBooking(req, res) {
       dateKey,
       time,
       eventType.duration_minutes,
-      hostTimezone
+      hostTimezone,
+      eventType.schedule_id
     );
     if (!withinAvailability) {
       return res.status(409).json({ error: AVAILABILITY_CHANGED_MESSAGE });
@@ -169,7 +171,11 @@ async function getEventType(req, res) {
       [req.params.slug]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' });
-    res.json(result.rows[0]);
+    const eventType = result.rows[0];
+    const scheduleId = await resolveScheduleId(eventType.user_id, eventType.schedule_id);
+    const rules = scheduleId ? await fetchRulesForSchedule(scheduleId) : [];
+    const available_days = rules.filter((r) => r.is_active).map((r) => r.day_of_week);
+    res.json({ ...eventType, available_days });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -191,11 +197,12 @@ async function getSlots(req, res) {
     const eventType = etResult.rows[0];
     const hostTimezone = eventType.host_timezone || 'Asia/Kolkata';
 
-    const window = await getAvailabilityWindow(eventType.user_id, dateKey, hostTimezone);
-    if (!window || window.isOff) return res.json({ slots: [] });
-
-    const startTime = window.startTime;
-    const endTime = window.endTime;
+    const availability = await getAvailabilityForDate(
+      eventType.user_id,
+      dateKey,
+      eventType.schedule_id
+    );
+    if (!availability || availability.isOff) return res.json({ slots: [] });
 
     const bookingsResult = await pool.query(
       `SELECT
@@ -210,12 +217,17 @@ async function getSlots(req, res) {
       [eventType.user_id, dateKey, hostTimezone]
     );
 
-    const slots = generateSlots(
-      startTime,
-      endTime,
-      eventType.duration_minutes,
-      bookingsResult.rows
-    );
+    const slotSet = new Set();
+    for (const window of availability.windows) {
+      const daySlots = generateSlots(
+        window.startTime,
+        window.endTime,
+        eventType.duration_minutes,
+        bookingsResult.rows
+      );
+      daySlots.forEach((s) => slotSet.add(s));
+    }
+    const slots = [...slotSet].sort();
 
     res.json({ slots });
   } catch (err) {
@@ -245,7 +257,8 @@ async function book(req, res) {
       dateKey,
       time,
       eventType.duration_minutes,
-      hostTimezone
+      hostTimezone,
+      eventType.schedule_id
     );
     if (!withinAvailability) {
       return res.status(409).json({ error: AVAILABILITY_CHANGED_MESSAGE });

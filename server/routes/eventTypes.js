@@ -3,6 +3,8 @@ const eventTypesController = require('../controllers/eventTypesController');
 
 const router = express.Router();
 
+router.use(eventTypesController.ensureSchedules);
+
 router.get('/', eventTypesController.list);
 router.post('/', eventTypesController.create);
 router.put('/:id', eventTypesController.update);

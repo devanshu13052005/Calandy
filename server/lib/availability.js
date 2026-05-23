@@ -1,14 +1,7 @@
 const pool = require('../db');
 const { getDayOfWeek } = require('./timezone');
-
-function formatTimeValue(t) {
-  if (!t) return null;
-  if (typeof t === 'string') return t.slice(0, 5);
-  const s = String(t);
-  if (/^\d{1,2}:\d{2}/.test(s)) return s.slice(0, 5);
-  if (t.toISOString) return t.toISOString().slice(11, 16);
-  return s.slice(0, 5);
-}
+const { formatTimeValue } = require('./scheduleDays');
+const { resolveScheduleId } = require('./scheduleQueries');
 
 function timeToMinutes(timeStr) {
   const [h, m] = timeStr.split(':').map(Number);
@@ -20,23 +13,19 @@ function normalizeDateParam(dateStr) {
 }
 
 /**
- * Resolve working hours for a host on a calendar date (YYYY-MM-DD) in host timezone.
- * @returns {{ isOff: true } | { isOff: false, startTime: string, endTime: string } | null}
+ * Resolve working windows for a host on a calendar date.
+ * Overrides take priority over weekly rules.
+ * @returns {{ isOff: true } | { isOff: false, windows: { startTime: string, endTime: string }[] } | null}
  */
-async function getAvailabilityWindow(userId, dateStr, hostTimezone = 'Asia/Kolkata') {
+async function getAvailabilityForDate(userId, dateStr, scheduleId = null) {
   const date = normalizeDateParam(dateStr);
-
-  const scheduleResult = await pool.query(
-    'SELECT * FROM availability_schedules WHERE user_id=$1 AND is_default=true LIMIT 1',
-    [userId]
-  );
-  if (scheduleResult.rows.length === 0) return null;
-  const schedule = scheduleResult.rows[0];
+  const resolvedScheduleId = await resolveScheduleId(userId, scheduleId);
+  if (!resolvedScheduleId) return null;
 
   const overrideResult = await pool.query(
     `SELECT * FROM date_overrides
      WHERE schedule_id=$1 AND override_date = $2::date`,
-    [schedule.id, date]
+    [resolvedScheduleId, date]
   );
 
   if (overrideResult.rows.length > 0) {
@@ -44,37 +33,64 @@ async function getAvailabilityWindow(userId, dateStr, hostTimezone = 'Asia/Kolka
     if (override.is_off) return { isOff: true };
     return {
       isOff: false,
-      startTime: formatTimeValue(override.start_time),
-      endTime: formatTimeValue(override.end_time),
+      windows: [
+        {
+          startTime: formatTimeValue(override.start_time),
+          endTime: formatTimeValue(override.end_time),
+        },
+      ],
     };
   }
 
   const dayOfWeek = await getDayOfWeek(date);
   const ruleResult = await pool.query(
     `SELECT start_time, end_time FROM availability_rules
-     WHERE schedule_id=$1 AND day_of_week=$2 AND is_active=true`,
-    [schedule.id, dayOfWeek]
+     WHERE schedule_id=$1 AND day_of_week=$2 AND is_active=true
+     ORDER BY start_time`,
+    [resolvedScheduleId, dayOfWeek]
   );
   if (ruleResult.rows.length === 0) return { isOff: true };
 
   return {
     isOff: false,
-    startTime: formatTimeValue(ruleResult.rows[0].start_time),
-    endTime: formatTimeValue(ruleResult.rows[0].end_time),
+    windows: ruleResult.rows.map((row) => ({
+      startTime: formatTimeValue(row.start_time),
+      endTime: formatTimeValue(row.end_time),
+    })),
   };
 }
 
-/** True if wall-clock slot fits within that day's availability window. */
-async function isSlotWithinAvailability(userId, dateStr, timeStr, durationMinutes, hostTimezone) {
-  const window = await getAvailabilityWindow(userId, dateStr, hostTimezone);
-  if (!window || window.isOff) return false;
+/** @deprecated alias — returns first window for backward compatibility */
+async function getAvailabilityWindow(userId, dateStr, hostTimezone, scheduleId = null) {
+  const availability = await getAvailabilityForDate(userId, dateStr, scheduleId);
+  if (!availability || availability.isOff) return availability;
+  return {
+    isOff: false,
+    startTime: availability.windows[0].startTime,
+    endTime: availability.windows[0].endTime,
+  };
+}
+
+/** True if wall-clock slot fits within any window for that day. */
+async function isSlotWithinAvailability(
+  userId,
+  dateStr,
+  timeStr,
+  durationMinutes,
+  hostTimezone,
+  scheduleId = null
+) {
+  const availability = await getAvailabilityForDate(userId, dateStr, scheduleId);
+  if (!availability || availability.isOff) return false;
 
   const slotStart = timeToMinutes(timeStr);
-  const slotEnd = slotStart + durationMinutes;
-  const winStart = timeToMinutes(window.startTime);
-  const winEnd = timeToMinutes(window.endTime);
+  const slotEnd = slotStart + Number(durationMinutes);
 
-  return slotStart >= winStart && slotEnd <= winEnd;
+  return availability.windows.some((window) => {
+    const winStart = timeToMinutes(window.startTime);
+    const winEnd = timeToMinutes(window.endTime);
+    return slotStart >= winStart && slotEnd <= winEnd;
+  });
 }
 
 const AVAILABILITY_CHANGED_MESSAGE =
@@ -83,6 +99,7 @@ const AVAILABILITY_CHANGED_MESSAGE =
 module.exports = {
   formatTimeValue,
   normalizeDateParam,
+  getAvailabilityForDate,
   getAvailabilityWindow,
   isSlotWithinAvailability,
   AVAILABILITY_CHANGED_MESSAGE,

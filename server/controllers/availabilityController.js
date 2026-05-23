@@ -6,7 +6,12 @@ function formatOverrideRow(row) {
   const d = row.override_date;
   let override_date = d;
   if (d instanceof Date) {
-    override_date = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+    // Use LOCAL date getters — node-postgres parses DATE as midnight local time,
+    // so getUTC* would shift dates backwards by the local UTC offset (e.g. -5:30 for IST).
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    override_date = `${year}-${month}-${day}`;
   } else if (typeof d === 'string') {
     override_date = d.slice(0, 10);
   }

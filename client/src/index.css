@@ -45,3 +45,22 @@ body {
   text-transform: uppercase;
   font-weight: 500;
 }
+
+@media (max-width: 640px) {
+  .react-calendar__tile {
+    height: 36px;
+    font-size: 13px;
+  }
+  .react-calendar__navigation button {
+    font-size: 14px;
+    min-width: 36px;
+  }
+  .react-calendar__month-view__weekdays {
+    font-size: 10px;
+  }
+}
+
+/* Admin availability month grid — scroll on narrow screens */
+.availability-month-grid {
+  min-width: 560px;
+}

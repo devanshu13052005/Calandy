@@ -61,7 +61,7 @@ export default function ReschedulePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-[#9CA3AF]">
+      <div className="min-h-screen flex items-center justify-center p-4 text-[#9CA3AF]">
         Loading...
       </div>
     );
@@ -69,8 +69,8 @@ export default function ReschedulePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
-        <div className="bg-white rounded-lg max-w-[480px] w-full p-8 text-center">
+      <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4 sm:p-6">
+        <div className="bg-white rounded-lg max-w-[480px] w-full p-6 sm:p-8 text-center">
           <div className="w-[60px] h-[60px] rounded-full bg-red-100 text-[#EF4444] flex items-center justify-center mx-auto text-2xl">
             ×
           </div>
@@ -83,15 +83,13 @@ export default function ReschedulePage() {
   if (success) {
     const { combined } = formatDateAndTime(success.start_time, success.host_timezone);
     return (
-      <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-6">
-        <div className="bg-white rounded-lg max-w-[480px] w-full p-8 text-center">
+      <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4 sm:p-6">
+        <div className="bg-white rounded-lg max-w-[480px] w-full p-6 sm:p-8 text-center">
           <div className="w-[60px] h-[60px] rounded-full bg-[#DCFCE7] text-[#00A86B] flex items-center justify-center mx-auto text-2xl">
             ✓
           </div>
-          <h1 className="text-2xl font-semibold mt-6">You&apos;re rescheduled!</h1>
-          <p className="text-[#6B7280] mt-2 text-sm">
-            New time: {combined}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-semibold mt-6">You&apos;re rescheduled!</h1>
+          <p className="text-[#6B7280] mt-2 text-sm">New time: {combined}</p>
         </div>
       </div>
     );
@@ -101,37 +99,37 @@ export default function ReschedulePage() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
-      <div className="bg-[#006BFF]/10 border-b border-[#006BFF]/20 px-6 py-3 text-center text-sm text-[#1A1F36]">
+      <div className="bg-[#006BFF]/10 border-b border-[#006BFF]/20 px-4 sm:px-6 py-3 text-center text-xs sm:text-sm text-[#1A1F36]">
         You are rescheduling: <strong>{booking.event_name}</strong> on {oldTime}
       </div>
-      <div className="flex justify-center pt-10 pb-10 px-4">
-        <div className="flex max-w-[900px] w-full bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-[#E5E7EB] overflow-hidden min-h-[480px]">
-        <div className="w-[420px] shrink-0 p-10 border-r border-[#E5E7EB]">
-          <CalendarPicker
-            selectedDate={selectedDate}
-            onSelectDate={setSelectedDate}
-            availableDays={availableDays}
-          />
-        </div>
-        <div className="flex-1 p-10">
-          <TimeSlotPicker
-            selectedDate={selectedDate}
-            slots={slots}
-            selectedTime={selectedTime}
-            onSelectTime={setSelectedTime}
-            loading={loadingSlots}
-          />
-          {selectedTime && (
-            <button
-              type="button"
-              onClick={handleConfirm}
-              disabled={submitting}
-              className="w-full mt-4 h-11 bg-[#006BFF] text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
-            >
-              {submitting ? 'Saving...' : 'Confirm New Time'}
-            </button>
-          )}
-        </div>
+      <div className="flex justify-center py-6 sm:py-10 px-3 sm:px-4">
+        <div className="flex flex-col md:flex-row max-w-[900px] w-full bg-white rounded-xl sm:rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.08)] border border-[#E5E7EB] overflow-hidden md:min-h-[480px]">
+          <div className="w-full md:w-1/2 border-b md:border-b-0 md:border-r border-[#E5E7EB] p-6 sm:p-8 md:p-10">
+            <CalendarPicker
+              selectedDate={selectedDate}
+              onSelectDate={setSelectedDate}
+              availableDays={availableDays}
+            />
+          </div>
+          <div className="flex-1 p-6 sm:p-8 md:p-10 min-w-0">
+            <TimeSlotPicker
+              selectedDate={selectedDate}
+              slots={slots}
+              selectedTime={selectedTime}
+              onSelectTime={setSelectedTime}
+              loading={loadingSlots}
+            />
+            {selectedTime && (
+              <button
+                type="button"
+                onClick={handleConfirm}
+                disabled={submitting}
+                className="w-full mt-4 h-11 bg-[#006BFF] text-white rounded-md font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                {submitting ? 'Saving...' : 'Confirm New Time'}
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

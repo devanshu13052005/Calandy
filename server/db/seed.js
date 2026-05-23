@@ -1,6 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
 const pool = require('./index');
 const { wallClockToUtc } = require('../lib/timezone');
+const { createDefaultScheduleForUser } = require('../lib/defaultSchedule');
 
 async function seed() {
   const existing = await pool.query('SELECT id FROM users LIMIT 1');
@@ -17,21 +18,10 @@ async function seed() {
   );
   const user = userResult.rows[0];
 
-  const scheduleResult = await pool.query(
-    `INSERT INTO availability_schedules (user_id, name, is_default)
-     VALUES ($1, 'Working Hours', true)
-     RETURNING *`,
-    [user.id]
+  const schedule = await createDefaultScheduleForUser(
+    user.id,
+    user.timezone || 'Asia/Kolkata'
   );
-  const schedule = scheduleResult.rows[0];
-
-  for (let day = 1; day <= 5; day++) {
-    await pool.query(
-      `INSERT INTO availability_rules (schedule_id, day_of_week, start_time, end_time, is_active)
-       VALUES ($1, $2, '09:00', '17:00', true)`,
-      [schedule.id, day]
-    );
-  }
 
   const eventTypes = [
     { name: '15 Min Chat', slug: '15-min-chat', duration: 15, color: '#006BFF' },
@@ -42,9 +32,9 @@ async function seed() {
   const eventTypeRows = [];
   for (const et of eventTypes) {
     const r = await pool.query(
-      `INSERT INTO event_types (user_id, name, slug, duration_minutes, color)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [user.id, et.name, et.slug, et.duration, et.color]
+      `INSERT INTO event_types (user_id, name, slug, duration_minutes, color, schedule_id)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [user.id, et.name, et.slug, et.duration, et.color, schedule.id]
     );
     eventTypeRows.push(r.rows[0]);
   }
