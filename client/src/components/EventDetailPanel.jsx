@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
+const DUMMY_MEET_LINK = 'https://meet.google.com/xyz-abcd-efg';
 
 function AccordionRow({ title, icon, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -68,7 +69,7 @@ export default function EventDetailPanel({
 
   const accent = event.color || '#006BFF';
   const publicLink = `${APP_URL}/${event.slug}`;
-  const location = event.location || null;
+  const meetLocation = event.location || DUMMY_MEET_LINK;
 
   return (
     <>
@@ -154,13 +155,24 @@ export default function EventDetailPanel({
 
           <AccordionRow
             title="Location"
-            icon={<LocationIcon warning={!location} />}
+            icon={<LocationIcon warning={false} />}
           >
-            {location ? (
-              <span className="text-[#1A1F36]">{location}</span>
-            ) : (
-              <span className="text-[#9CA3AF]">No location set</span>
-            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-[#E8F5E9] text-[#00A86B] text-[10px] font-bold shrink-0">
+                G
+              </span>
+              <div className="min-w-0">
+                <p className="text-[#1A1F36] font-medium">Google Meet</p>
+                <a
+                  href={meetLocation}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#006BFF] text-xs hover:underline break-all"
+                >
+                  {meetLocation.replace('https://', '')}
+                </a>
+              </div>
+            </div>
           </AccordionRow>
 
           <AccordionRow
