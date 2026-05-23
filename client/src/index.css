@@ -7,6 +7,15 @@ body {
   margin: 0;
 }
 
+@keyframes slideInPanel {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 .react-calendar {
   border: none;
   font-family: Inter, system-ui, sans-serif;

@@ -15,4 +15,7 @@ FROM availability_schedules s
 WHERE et.user_id = s.user_id
   AND s.is_default = true
   AND et.schedule_id IS NULL;
+
+ALTER TABLE bookings
+  ADD COLUMN IF NOT EXISTS meet_link VARCHAR(255);
 `;

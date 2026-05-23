@@ -11,6 +11,7 @@ CREATE TABLE bookings (
   reschedule_token UUID UNIQUE DEFAULT uuid_generate_v4(),
   invitee_timezone VARCHAR(100) DEFAULT 'Asia/Kolkata',
   notes TEXT,
+  meet_link VARCHAR(255),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

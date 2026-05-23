@@ -50,6 +50,32 @@ export default function BookingConfirm() {
             <span className="text-[#9CA3AF]">📋</span>
             <span>{booking.event_type_name || eventType?.name}</span>
           </div>
+          {booking.meet_link && (
+            <div className="pt-3 border-t border-[#E5E7EB] mt-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded bg-[#E8F5E9] text-[#00A86B] text-xs font-bold">
+                  G
+                </span>
+                <span className="text-sm font-medium text-[#1A1F36]">Google Meet</span>
+              </div>
+              <a
+                href={booking.meet_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-[#006BFF] break-all hover:underline block mb-3"
+              >
+                {booking.meet_link}
+              </a>
+              <a
+                href={booking.meet_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-[#00A86B] text-white text-sm font-medium rounded-md hover:bg-green-700"
+              >
+                Join Google Meet
+              </a>
+            </div>
+          )}
         </div>
         <Link
           to={`/${slug}`}

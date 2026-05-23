@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import api from '../api/axios';
 import EventTypeCard from '../components/EventTypeCard';
 import EventTypeModal from '../components/EventTypeModal';
+import EventDetailPanel from '../components/EventDetailPanel';
 import PageLoader from '../components/PageLoader';
 import { buildScheduleSummary } from '../utils/scheduleSummary';
 
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   const scheduleSummaryById = useMemo(() => {
     const map = {};
@@ -62,6 +64,7 @@ export default function Dashboard() {
     }
     setModalOpen(false);
     setEditing(null);
+    setSelectedEvent(null);
     load();
   };
 
@@ -185,6 +188,7 @@ export default function Dashboard() {
                 scheduleSummaryById[schedules.find((s) => s.isDefault)?.id] ||
                 'No availability set'
               }
+              onSelect={setSelectedEvent}
               onEdit={(item) => {
                 setEditing(item);
                 setModalOpen(true);
@@ -205,6 +209,27 @@ export default function Dashboard() {
         onSave={handleSave}
         initial={editing}
       />
+
+      {selectedEvent && (
+        <EventDetailPanel
+          event={selectedEvent}
+          availabilityText={
+            scheduleSummaryById[selectedEvent.schedule_id] ||
+            scheduleSummaryById[schedules.find((s) => s.isDefault)?.id] ||
+            'No availability set'
+          }
+          host={HOST}
+          onClose={() => setSelectedEvent(null)}
+          onEdit={(item) => {
+            setEditing(item);
+            setModalOpen(true);
+          }}
+          onMoreOptions={(item) => {
+            setEditing(item);
+            setModalOpen(true);
+          }}
+        />
+      )}
     </div>
   );
 }

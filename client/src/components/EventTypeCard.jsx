@@ -5,6 +5,7 @@ const APP_URL = import.meta.env.VITE_APP_URL || window.location.origin;
 export default function EventTypeCard({
   eventType,
   availabilityText,
+  onSelect,
   onEdit,
   onToggle,
   onDelete,
@@ -23,9 +24,23 @@ export default function EventTypeCard({
   const durationLabel = `${eventType.duration_minutes} min`;
   const metaLine = `${durationLabel} · Web conferencing · One-on-One`;
 
+  const handleCardClick = (e) => {
+    if (e.target.closest('button, a, input')) return;
+    onSelect?.(eventType);
+  };
+
   return (
     <div
-      className={`group relative bg-white border border-[#E5E7EB] rounded-lg flex flex-col sm:flex-row sm:items-stretch transition-all duration-150 hover:shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:border-[#D1D5DB] ${
+      role="button"
+      tabIndex={0}
+      onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect?.(eventType);
+        }
+      }}
+      className={`group relative bg-white border border-[#E5E7EB] rounded-lg flex flex-col sm:flex-row sm:items-stretch transition-all duration-150 hover:shadow-[0_2px_10px_rgba(0,0,0,0.06)] hover:border-[#D1D5DB] cursor-pointer ${
         !eventType.is_active ? 'opacity-60' : ''
       }`}
     >

@@ -14,6 +14,7 @@ const {
   sendCancellationEmail,
   sendRescheduleEmail,
 } = require('../lib/emails');
+const { generateMeetLink } = require('../lib/meetLink');
 
 async function getCancelBooking(req, res) {
   try {
@@ -269,9 +270,11 @@ async function book(req, res) {
       return res.status(409).json({ error: SLOT_TAKEN_MESSAGE });
     }
 
+    const meetLink = generateMeetLink();
+
     const bookingResult = await pool.query(
-      `INSERT INTO bookings (event_type_id, invitee_name, invitee_email, start_time, end_time, invitee_timezone, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      `INSERT INTO bookings (event_type_id, invitee_name, invitee_email, start_time, end_time, invitee_timezone, notes, meet_link)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [
         eventType.id,
         invitee_name,
@@ -280,6 +283,7 @@ async function book(req, res) {
         end_time.toISOString(),
         invitee_timezone || 'Asia/Kolkata',
         notes || null,
+        meetLink,
       ]
     );
     const booking = bookingResult.rows[0];

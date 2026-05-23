@@ -19,7 +19,8 @@ async function sendConfirmationEmail(booking, eventType, host) {
            <hr>
            <a href="${process.env.APP_URL}/reschedule/${booking.reschedule_token}">Reschedule</a>
            &nbsp;|&nbsp;
-           <a href="${process.env.APP_URL}/cancel/${booking.cancel_token}">Cancel</a>`,
+           <a href="${process.env.APP_URL}/cancel/${booking.cancel_token}">Cancel</a>
+           ${booking.meet_link ? `<hr><p><strong>Your Google Meet link:</strong> <a href="${booking.meet_link}">${booking.meet_link}</a></p><p>Click to join: <a href="${booking.meet_link}">${booking.meet_link}</a></p>` : ''}`,
   });
 }
 
